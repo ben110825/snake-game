@@ -1,3 +1,4 @@
+import java.awt.Button;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
@@ -9,6 +10,7 @@ import java.util.Random;
 import javax.swing.Timer;
 import java.util.TimerTask;
 
+import javax.swing.JButton;
 import javax.swing.JPanel;
 
 
@@ -17,9 +19,12 @@ public class GamePanel extends JPanel implements ActionListener{
 	static final int SCREEN_HEIGHT = 600;
 	static final int UNIT_SIZE = 25;
 	static final int GAME_UNIT = (SCREEN_WIDTH*SCREEN_HEIGHT)/UNIT_SIZE;
-	static final int DELAY = 75;  
+	static final int DELAY_BOUND = 15;
+
+	static int DELAY = 75;  
 	final int x[] = new int[GAME_UNIT];
 	final int y[] = new int[GAME_UNIT];
+	JButton restart = new JButton("Restart");
 	int bodyParts = 6;
 	int applesEaten;
 	int appleX;
@@ -36,17 +41,35 @@ public class GamePanel extends JPanel implements ActionListener{
 		this.setBackground(Color.black);
 		this.setFocusable(true);
 		this.addKeyListener(new MyKeyAdapter());
+		this.add(restart);
+		restart.setFont(new Font(Font.DIALOG,Font.BOLD,30));
+		restart.setBackground(Color.red);
+		restart.setBounds(SCREEN_WIDTH/2-SCREEN_WIDTH/10, SCREEN_HEIGHT/4, SCREEN_WIDTH/5, 50);
+		restart.setVisible(false);
 		startGame();
 	}
 	
-	public void startGame() {
+	public void startGame() {		
 		newApple();
 		running = true;
 		timer = new Timer(DELAY, this);
         timer.start();
         
 	}
-	
+	public void restartGame() {
+		bodyParts = 6;
+		for(int i=0;i<x.length;i++) {
+			x[i] = 0;
+			y[i] = 0;
+		}
+		restart.setVisible(running);
+		direction = 'R';
+		applesEaten = 0;
+		newApple();
+		running = true;
+		timer.start();
+        
+	}
 	
 	public void paintComponent(Graphics g) {
 		super.paintComponent(g);
@@ -78,7 +101,6 @@ public class GamePanel extends JPanel implements ActionListener{
 			g.drawString("Score: "+applesEaten, (SCREEN_WIDTH-metrics.stringWidth("Score: "+applesEaten))/2, SCREEN_HEIGHT/10);
 		}
 		else {
-		
 			gameOver(g);
 		}
 	}
@@ -86,6 +108,10 @@ public class GamePanel extends JPanel implements ActionListener{
 		appleX = random.nextInt((int)(SCREEN_WIDTH/UNIT_SIZE))*UNIT_SIZE;
 		appleY = random.nextInt((int)(SCREEN_HEIGHT/UNIT_SIZE))*UNIT_SIZE;
 
+	}
+	public void setDelay() {
+		timer.setDelay(DELAY>DELAY_BOUND ? DELAY-=5 : DELAY);
+		timer.restart();
 	}
 	public void move() {
 		for(int i=bodyParts;i>0;i--) {
@@ -121,6 +147,7 @@ public class GamePanel extends JPanel implements ActionListener{
 			bodyParts++;
 			applesEaten++;
 			newApple();
+			setDelay();
 		}
 	}
 	public void checkCollision() {
@@ -142,7 +169,7 @@ public class GamePanel extends JPanel implements ActionListener{
 		if(y[0] > SCREEN_HEIGHT) {
 			running = false;
 		}
-		
+
 		if(!running) {
 			timer.stop();
 		}
@@ -152,6 +179,17 @@ public class GamePanel extends JPanel implements ActionListener{
 		g.setFont(new Font(Font.DIALOG,Font.BOLD,75));
 		FontMetrics metrics = getFontMetrics(g.getFont()) ;
 		g.drawString("GameOver", (SCREEN_WIDTH-metrics.stringWidth("GameOver"))/2, SCREEN_HEIGHT/2);
+		restart.setVisible(true);
+		restart.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				// TODO Auto-generated method stub
+				restart.setVisible(false);
+				restartGame();
+			}
+			
+		});
+		
 	}
 	@Override
 	public void actionPerformed(ActionEvent e) {
